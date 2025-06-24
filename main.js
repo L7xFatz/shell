@@ -94,13 +94,21 @@ bot.command('sqlmap', async (ctx) => {
 
   ctx.reply('🕵️ Menjalankan sqlmap, mohon tunggu...');
 
-  exec(`sqlmap -u "${url}" --batch --output-dir=sqlmap_logs`, (error, stdout) => {
-    if (error) {
-      ctx.reply('❌ Gagal menjalankan sqlmap. Pastikan sqlmap sudah terinstall.');
-    } else {
-      fs.writeFileSync(outFile, stdout);
-      ctx.replyWithDocument({ source: outFile });
-    }
+  exec(`sqlmap -u "${url}" --dbs --batch`, (error, stdout, stderr) => {
+  if (error) {
+    ctx.reply(`❌ Gagal menjalankan sqlmap:\n${stderr}`);
+  } else {
+    const hasil = stdout
+      .split('\n')
+      .filter(line =>
+        line.includes('available databases') ||
+        line.includes('[*]') ||
+        line.includes('the back-end DBMS')
+      )
+      .join('\n');
+
+    ctx.reply(`✅ Hasil SQLMap:\n\n${hasil || 'Tidak ditemukan output yang relevan.'}`);
+  }
   });
 });
 
